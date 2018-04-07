@@ -52,7 +52,6 @@ namespace OS_Sips
 
         public override void Validate()
         {
-            throw new NotImplementedException();
         }
 
     }
