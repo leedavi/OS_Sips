@@ -17,4 +17,10 @@ In this situation you'll need to move them to the server manually, into: \Deskto
 
  
 
+ Development
+ ===========
+
+ You need to install the NuGet package "MSBuildTasks v1.5.0.235"
+
+ The request.exe & response.exe files have been ignored by Git, unzip the \DesktopModules\NBright\OS_Sips\sipsbin\sipsbin.zip to get them.
 
