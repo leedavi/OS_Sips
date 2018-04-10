@@ -149,6 +149,12 @@ var info = (NBrightInfo)Model.List.First();
                 @TextBox(info, "genxml/textbox/paramfolder", "class='form-control'", "sipsparam")
             </div>
         </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">IPN url (leave empty to default to https://***)</label>
+            <div class="col-sm-3">
+                @TextBox(info, "genxml/textbox/ipn", "class='form-control'", "")
+            </div>
+        </div>
     </div>
 
         <div class="row">

@@ -62,9 +62,16 @@ namespace OS_Sips
             var sUrlKo = Globals.NavigateURL(storeSettings.PaymentTabId, "", param);
             parms += "normal_return_url=" + sUrlOk + " ";
             parms += "cancel_return_url=" + sUrlKo + " ";
-            var baseUri = new Uri("http://" + PortalSettings.Current.PortalAlias.HTTPAlias);
-            var absoluteUri = new Uri(baseUri, "/DesktopModules/NBright/OS_Sips/notify.ashx");
-            parms += "automatic_response_url=" + absoluteUri + " ";
+            if (settings.GetXmlProperty("genxml/textbox/ipn") != "")
+            {
+                parms += "automatic_response_url=" + settings.GetXmlProperty("genxml/textbox/ipn") + " ";
+            }
+            else
+            {
+                var baseUri = new Uri("https://" + PortalSettings.Current.PortalAlias.HTTPAlias);
+                var absoluteUri = new Uri(baseUri, "/DesktopModules/NBright/OS_Sips/notify.ashx");
+                parms += "automatic_response_url=" + absoluteUri + " ";
+            }
             parms += "language=" + orderData.Lang.Substring(0, 2) + " ";
 
 
