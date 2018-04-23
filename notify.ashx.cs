@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Runtime.Remoting.Contexts;
+using System.Collections;
 using System.Web;
+using DotNetNuke.Entities.Portals;
 using NBrightCore.common;
 using Nevoweb.DNN.NBrightBuy.Components;
 
@@ -13,12 +14,9 @@ namespace OS_Sips.DNN.NBrightStore
     {
         private String _lang = "";
 
-
-
-
         /// <summary>
         /// This function needs to process and returned message from the bank.
-        /// This processing may vary widely between banks.
+        /// Thsi processing may vary widely between banks.
         /// </summary>
         /// <param name="context"></param>
         public void ProcessRequest(HttpContext context)
@@ -28,82 +26,146 @@ namespace OS_Sips.DNN.NBrightStore
 
             try
             {
+
                 var debugMode = info.GetXmlPropertyBool("genxml/checkbox/debugmode");
-                var debugMsg = "START CALL" + DateTime.Now.ToString("s") + " </br>";
                 var rtnMsg = "version=2" + Environment.NewLine + "cdr=1";
 
                 // ------------------------------------------------------------------------
                 // In this case the payment provider passes back data via form POST.
                 // Get the data we need.
                 string returnmessage = "";
-                int OS_SipsStoreOrderID = 0;
-                string OS_SipsCartID = "";
-                string OS_SipsClientLang = "";
+                int NBrightBuySipsApiStoreOrderID = 0;
+                string NBrightBuySipsApiCartID = "";
+                string NBrightBuySipsApiClientLang = "";
 
-                var orderid = Utils.RequestQueryStringParam(context, "ref");
-                debugMsg += "orderid: " + orderid + "</br>";
-
-                if (Utils.IsNumeric(orderid))
+                if ((context.Request.Form.Get("DATA") != null))
                 {
-                    var authcode = Utils.RequestQueryStringParam(context, "auto");
-                    var errcode = Utils.RequestQueryStringParam(context, "rtnerr");
+                    returnmessage = "message=" + context.Request.Form.Get("DATA");
 
-                    OS_SipsStoreOrderID = Convert.ToInt32(orderid);
-                    // ------------------------------------------------------------------------
-
-                    debugMsg += "OrderId: " + orderid + " </br>";
-                    debugMsg += "errcode: " + errcode + " </br>";
-                    debugMsg += "authcode: " + authcode + " </br>";
-
-                    var orderData = new OrderData(OS_SipsStoreOrderID);
-
-
-                    if (authcode == "")
-                        rtnMsg = "KO";
-                    else
-                        rtnMsg = "OK";
-
-                    if (authcode == "")
+                    if (!string.IsNullOrEmpty(returnmessage))
                     {
-                        orderData.PaymentFail();
-                    }
-                    else
-                    {
-                        if (errcode == "00000")
+                        // ------------------------------------------------------------------------
+                        //var settings = ProviderUtils.GetProviderSettings("NBrightBuySipsApipayment");
+
+                        var controlMapPath = HttpContext.Current.Server.MapPath("/DesktopModules/NBright/OS_Sips");
+                        var pathfile = "pathfile=" + PortalSettings.Current.HomeDirectoryMapPath.TrimEnd('\\') + "\\" + info.GetXmlProperty("genxml/textbox/paramfolder") + "\\pathfile";
+
+                        var exepath = controlMapPath.TrimEnd('\\') + "\\sipsbin\\response.exe";
+                        var sipsdata = ProviderUtils.CallSipsExec(exepath, pathfile + " " + returnmessage);
+
+                        if (debugMode)
                         {
-                            orderData.PaymentOk();
+                            info.SetXmlProperty("genxml/debugmsg", sipsdata);
+                            modCtrl.Update(info);
                         }
-                        else if (errcode == "99999")
+
+                        var tableau = sipsdata.Split('!');
+
+                        string code = tableau[1];
+                        string error_msg = tableau[2];
+
+                        if (string.IsNullOrEmpty(code) | code == "-1")
                         {
-                            orderData.PaymentOk("050");
+                            info.SetXmlProperty("genxml/debugmsg", error_msg);
+                            modCtrl.Update(info);
                         }
                         else
                         {
-                            orderData.PaymentFail();
+                            // L'execution s'est bien deroulee
+                            // recuperation des donnees de la reponse
+
+                            string merchant_id = tableau[3];
+                            string merchant_country = tableau[4];
+                            string amount = tableau[5];
+                            string transaction_id = tableau[6];
+                            string payment_means = tableau[7];
+                            string transmission_date = tableau[8];
+                            string payment_time = tableau[9];
+                            string payment_date = tableau[10];
+                            string response_code = tableau[11];
+                            string payment_certificate = tableau[12];
+                            string authorisation_id = tableau[13];
+                            string currency_code = tableau[14];
+                            string card_number = tableau[15];
+                            string cvv_flag = tableau[16];
+                            string cvv_response_code = tableau[17];
+                            string bank_response_code = tableau[18];
+                            string complementary_code = tableau[19];
+                            string complementary_info = tableau[20];
+                            string return_context = tableau[21];
+                            string caddie = tableau[22];
+                            string receipt_complement = tableau[23];
+                            string merchant_language = tableau[24];
+                            string language = tableau[25];
+                            string customer_id = tableau[26];
+                            string order_id = tableau[27];
+                            string customer_email = tableau[28];
+                            string customer_ip_address = tableau[29];
+                            string capture_day = tableau[30];
+                            string capture_mode = tableau[31];
+                            string data = tableau[32];
+
+                            // Sauvegarde des champs de la reponse
+                            string Lmsg = null;
+
+                            Lmsg = merchant_id + ",";
+                            Lmsg += merchant_country + ",";
+                            Lmsg += amount + ",";
+                            Lmsg += transaction_id + ",";
+                            Lmsg += transmission_date + ",";
+                            Lmsg += payment_means + ",";
+                            Lmsg += payment_time + ",";
+                            Lmsg += payment_date + ",";
+                            Lmsg += response_code + ",";
+                            Lmsg += payment_certificate + ",";
+                            Lmsg += authorisation_id + ",";
+                            Lmsg += currency_code + ",";
+                            Lmsg += card_number + ",";
+                            Lmsg += cvv_flag + ",";
+                            Lmsg += cvv_response_code + ",";
+                            Lmsg += bank_response_code + ",";
+                            Lmsg += complementary_code + ",";
+                            Lmsg += complementary_info + ",";
+                            Lmsg += return_context + ",";
+                            Lmsg += caddie + ",";
+                            Lmsg += receipt_complement + ",";
+                            Lmsg += merchant_language + ",";
+                            Lmsg += language + ",";
+                            Lmsg += customer_id + ",";
+                            Lmsg += order_id + ",";
+                            Lmsg += customer_email + ",";
+                            Lmsg += customer_ip_address + ",";
+                            Lmsg += capture_day + ",";
+                            Lmsg += capture_mode + ",";
+                            Lmsg += data + ",";
+
+                            //update database stuff
+                            if (Utils.IsNumeric(order_id))
+                            {
+                                var orderData = new OrderData(Convert.ToInt32(order_id));
+                                orderData.AddAuditMessage(Lmsg, "payment", "sipsapi", info.GetXmlProperty("genxml/checkbox/debugmode"));
+                                // Status return "00" is payment successful
+                                if (response_code == "00")
+                                {
+                                    //set order status to Payed
+                                    orderData.PaymentOk();
+                                }
+                                else
+                                {
+                                    orderData.PaymentFail();
+                                }
+                            }
                         }
+
                     }
+
                 }
-                if (debugMode)
-                {
-                    debugMsg += "Return Message: " + rtnMsg;
-                    info.SetXmlProperty("genxml/debugmsg", debugMsg);
-                    modCtrl.Update(info);
-                }
-
-
-                HttpContext.Current.Response.Clear();
-                HttpContext.Current.Response.Write(rtnMsg);
-                HttpContext.Current.Response.ContentType = "text/plain";
-                HttpContext.Current.Response.CacheControl = "no-cache";
-                HttpContext.Current.Response.Expires = -1;
-                HttpContext.Current.Response.End();
-
             }
             catch (Exception ex)
             {
-                if (!ex.ToString().StartsWith("System.Threading.ThreadAbortException")) // we expect a thread abort from the End response.
+                if (!ex.ToString().StartsWith("System.Threading.ThreadAbortException"))  // we expect a thread abort from the End response.
                 {
-                    info.SetXmlProperty("genxml/debugmsg", "OS_Sips ERROR: " + ex.ToString());
+                    info.SetXmlProperty("genxml/debugmsg", "NBrightBuySipsApi ERROR: " + ex.ToString());
                     modCtrl.Update(info);
                 }
             }
