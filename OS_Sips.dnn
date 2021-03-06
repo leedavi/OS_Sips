@@ -1,6 +1,6 @@
 ﻿<dotnetnuke type="Package" version="5.0">
 	<packages>
-		<package name="OS_Sips" type="Module" version="1.0.1">
+		<package name="OS_Sips" type="Module" version="1.0.2">
 			<friendlyName>OS_Sips</friendlyName>
 			<description>OS_Sips: Payment provider for Open-Store</description>
 			<iconFile />
